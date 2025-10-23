@@ -1,8 +1,46 @@
-version: '3.8'
+name: CI with Docker
 
-services:
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
   test:
-    build: .
-    env_file:
-      - .env
-    command: pytest -v
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        pytest -v
+
+  docker-build-test:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: |
+        docker build -t student-grade-predictor .
+
+    - name: Test Docker image
+      run: |
+        docker run student-grade-predictor
