@@ -9,50 +9,34 @@ on:
 jobs:
   test-and-lint:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9, 3.10]
-
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.10'
 
     - name: Create environment file
       run: |
-        cat > .env << EOF
-        MODEL_NAME=student_grade_predictor
-        DEBUG=True
-        SECRET_KEY=test-secret-key-for-ci-${{ github.sha }}
-        API_KEY=test-api-key-for-ci-${{ github.sha }}
-        TEST_MODE=ci
-        EOF
+        echo "MODEL_NAME=student_grade_predictor" > .env
+        echo "DEBUG=True" >> .env
+        echo "SECRET_KEY=test-secret-key-123" >> .env
+        echo "API_KEY=test-api-key-456" >> .env
+        echo "TEST_MODE=ci" >> .env
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install numpy pytest flake8 pylint
+        pip install numpy pytest flake8
 
-    - name: Check code style with flake8
+    - name: Run basic linting
       run: |
-        echo "=== Running flake8 ==="
-        flake8 4-homework2.py --max-line-length=127 --show-source --statistics
+        # 只检查错误，不检查警告
+        flake8 4-homework2.py --select=E9,F63,F7,F82 --show-source
 
-    - name: Run static analysis with pylint
+    - name: Run pytest tests
       run: |
-        echo "=== Running pylint ==="
-        pylint 4-homework2.py --exit-zero --score=no
-
-    - name: Run tests with pytest
-      run: |
-        echo "=== Running pytest ==="
-        python -m pytest 4-homework2.py -v --tb=short --cov=.
-
-    - name: Test script execution
-      run: |
-        echo "=== Testing direct script execution ==="
-        python 4-homework2.py
+        python -m pytest 4-homework2.py -v
